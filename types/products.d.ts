@@ -21,6 +21,47 @@ interface Product {
   updated_at: string;
 }
 
+interface AllProductsCardProps {
+  item: {
+    id: number;
+    name: string;
+    barcode: string;
+    stock: number;
+    sold: number;
+    price: number;
+    image_url?: string;
+  };
+  formatIDR: (amount: number) => string;
+}
+
+interface ProductFormData {
+  name: string;
+  price: string;
+  modal: string;
+  stock: string;
+  unit: string;
+  barcode: string;
+  category_id: string;
+  size_id: string;
+  supplier_id: string;
+  description: string;
+  min_stock: string;
+  discount: string;
+  image_url: string;
+  best_seller: boolean;
+}
+
+interface UseStateCreateProductsProps {
+  // Optional - jika tidak diberikan, akan menggunakan hooks internal
+  id?: string | string[];
+  product?: any;
+  createProduct?: (productData: any) => Promise<any>;
+  updateProduct?: (id: number, productData: any) => Promise<any>;
+  categories?: any[];
+  sizes?: any[];
+  suppliers?: any[];
+}
+
 type ProductWithRelations = Product & {
   product_categories?: ProductCategory | null;
   product_sizes?: ProductSize | null;
@@ -64,6 +105,15 @@ interface Supplier {
   updated_at: string;
 }
 
+type SupplierFormData = {
+  name: string;
+  contact_person: string;
+  phone: string;
+  email: string;
+  address: string;
+  is_active: boolean;
+};
+
 interface ProductDetailsViewKaryawanProps {
   product: Product;
   categories: ProductCategory[];
@@ -79,7 +129,19 @@ interface ProductDetailsViewProps {
   suppliers: Supplier[];
   onClose: () => void;
   onEdit: (product: Product) => void;
+  formatIDR: (amount: number) => string;
+  formatDateTime: (
+    dateInput: string | number | Date,
+    options?: Intl.DateTimeFormatOptions
+  ) => string;
 }
+
+type ProductsCategoryCardProps = {
+  item: any;
+  formatDate: (date: any) => string;
+  onEdit: (item: any) => void;
+  onDelete: (item: any) => void;
+};
 
 type ManagementSectionProps = {
   categoriesCount: number;
@@ -89,6 +151,8 @@ type ManagementSectionProps = {
   onNavigateCategory: () => void;
   onNavigateSize: () => void;
   onNavigateSupplier: () => void;
+  handleNavigateAllProducts: () => void;
+  onNavigateBarcode: () => void;
 };
 
 interface ProductContextType {
@@ -162,4 +226,12 @@ interface ProductContextType {
   // Utility
   refreshData: () => Promise<void>;
   clearError: () => void;
+}
+
+interface TopSellerCardProps {
+  item: Product;
+  qty: number;
+  addQty: (id: number) => void;
+  subQty: (id: number) => void;
+  formatIDR: (amount: number) => string;
 }
