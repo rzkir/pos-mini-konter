@@ -48,7 +48,7 @@ export class DataExportImportService {
           try {
             // Ensure file exists before reading
             const info = await FileSystem.getInfoAsync(v as string).catch(
-              () => ({ exists: false }) as any
+              () => ({ exists: false } as any)
             );
             if (info && (info as any).exists) {
               const base64 = await FileSystem.readAsStringAsync(v as string, {

@@ -74,7 +74,6 @@ export default function EditProduct() {
             {/* Header */}
             <HeaderGradient
                 title={isEdit ? 'Edit Produk' : 'Tambah Produk'}
-                colors={['#FF9228', '#FF9228']}
             >
                 <View className='flex-row items-center justify-between w-full'>
                     <TouchableOpacity onPress={() => router.back()} className="px-3 py-2">

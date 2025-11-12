@@ -709,16 +709,22 @@ export function useStateCreateProducts(props?: UseStateCreateProductsProps) {
 
   const unitOptions = useMemo(
     () => [
-      { label: "Pcs (Satuan)", value: "pcs" },
-      { label: "Kg (Kilogram)", value: "kg" },
-      { label: "Liter", value: "liter" },
-      { label: "Meter", value: "meter" },
-      { label: "Box (Kotak)", value: "box" },
-      { label: "Pack (Paket)", value: "pack" },
-      { label: "Botol", value: "botol" },
-      { label: "Gram", value: "gram" },
-      { label: "Dus", value: "dus" },
-      { label: "Roll", value: "roll" },
+      {
+        label: "Pcs - Per satuan kecil seperti casing atau kabel",
+        value: "pcs",
+      },
+      { label: "Unit - Barang utuh seperti HP atau headset", value: "unit" },
+      { label: "Set - Beberapa item jadi satu paket", value: "set" },
+      { label: "Pack - Satu bungkus isi beberapa pcs", value: "pack" },
+      { label: "Box - Satu kotak isi banyak produk", value: "box" },
+      {
+        label: "Kartu - Untuk kartu perdana atau voucher fisik",
+        value: "kartu",
+      },
+      {
+        label: "Kode - Untuk produk digital seperti pulsa atau token",
+        value: "kode",
+      },
     ],
     []
   );

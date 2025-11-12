@@ -22,7 +22,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ProductProvider } from '@/context/ProductContext';
 
-// eslint-disable-next-line import/no-unresolved
 import { AppSettingsProvider } from '@/context/AppSettingsContext';
 
 export const unstable_settings = {
@@ -35,7 +34,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (Platform.OS === 'android') {
-      SystemUI.setBackgroundColorAsync('#FF9228').catch(() => { });
+      SystemUI.setBackgroundColorAsync('#1E90FF').catch(() => { });
     }
 
     (async () => {
@@ -58,7 +57,7 @@ export default function RootLayout() {
             name: 'Default',
             importance: Notifications.AndroidImportance.MAX,
             vibrationPattern: [0, 250, 250, 250],
-            lightColor: '#FF9228',
+            lightColor: '#1E90FF',
             sound: 'default',
           }).catch(() => { });
 
@@ -66,7 +65,7 @@ export default function RootLayout() {
             name: 'Low Stock Alerts',
             importance: Notifications.AndroidImportance.HIGH,
             vibrationPattern: [0, 250, 250, 250],
-            lightColor: '#FF9228',
+            lightColor: '#1E90FF',
             sound: 'default',
           }).catch(() => { });
         }
@@ -102,7 +101,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar style="dark" backgroundColor="#FF9228" />
+        <StatusBar style="dark" backgroundColor="#1E90FF" />
         <PermissionProvider>
           <AppSettingsProvider>
             <ProductProvider>

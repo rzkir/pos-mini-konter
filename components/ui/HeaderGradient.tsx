@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { View, Text, Image } from 'react-native';
 
 export default function HeaderGradient({
-    colors = ['#FF9228', '#FF9228'],
+    colors = ['#1E90FF', '#0EA5E9'],
     start = { x: 0, y: 0 },
     end = { x: 1, y: 1 },
     style,

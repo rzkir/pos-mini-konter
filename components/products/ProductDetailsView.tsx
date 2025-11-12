@@ -22,7 +22,6 @@ export default function ProductDetailsView({
         <View className="flex-1 bg-background">
             {/* Header with Gradient */}
             <HeaderGradient
-                colors={['#FF9228', '#FF9228']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 title="Detail Produk"

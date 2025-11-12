@@ -37,9 +37,8 @@ export default function AllProducts() {
         <View className="flex-1 bg-background">
             <HeaderGradient
                 icon="AP"
-                title="All Products"
-                subtitle="Semua produk tersedia"
-                colors={['#FF9228', '#FF9228']}
+                title="Daftar Produk"
+                subtitle="Kelola inventori produk Anda"
             >
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
@@ -48,8 +47,8 @@ export default function AllProducts() {
                         </TouchableOpacity>
 
                         <View className='flex-col gap-1'>
-                            <Text className="text-white font-bold">All Products</Text>
-                            <Text className="text-white/80 text-xs">Semua produk tersedia</Text>
+                            <Text className="text-white font-bold">Daftar Produk</Text>
+                            <Text className="text-white/80 text-xs">Kelola inventori produk Anda</Text>
                         </View>
                     </View>
 

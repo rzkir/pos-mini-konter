@@ -172,27 +172,27 @@ export function useProducts() {
   };
 
   const handleEdit = (product: any) => {
-    router.push("/(tabs)/products");
+    router.push(`/products/${product.id}`);
   };
 
   const handleAdd = () => {
-    router.push("/(tabs)/products");
+    router.push("/products/new");
   };
 
   const handleNavigateToCategory = () => {
-    router.push("/(tabs)/products");
+    router.push("/products/category");
   };
 
   const handleNavigateToSize = () => {
-    router.push("/(tabs)/products");
+    router.push("/products/size");
   };
 
   const handleNavigateToSupplier = () => {
-    router.push("/(tabs)/products");
+    router.push("/products/supplier");
   };
 
   const handleNavigateAllProducts = () => {
-    router.push("/(tabs)/products");
+    router.push("/products/all-products");
   };
 
   const handleDelete = (product: any) => {

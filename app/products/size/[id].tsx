@@ -18,7 +18,6 @@ export default function SizeForm() {
     const { id } = useLocalSearchParams()
     const router = useRouter()
     const isEdit = id !== 'new'
-    // Removed: const { user } = useAuth()
 
     const [formData, setFormData] = useState({
         uid: '',
@@ -136,7 +135,7 @@ export default function SizeForm() {
                         label="Nama Ukuran *"
                         value={formData.name}
                         onChangeText={(text) => handleInputChange('name', text)}
-                        placeholder="Masukkan nama ukuran (contoh: S, M, L, XL)"
+                        placeholder="Masukkan ukuran (contoh: 2GB, 4GB, 8GB, 16GB, 32GB, 64GB, 128GB, 256GB, 512GB, 1TB)"
                         returnKeyType="next"
                     />
 

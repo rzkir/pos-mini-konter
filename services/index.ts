@@ -9,3 +9,5 @@ export { ProductSizeService } from "@/services/productSizeService";
 export { SupplierService } from "@/services/supplierService";
 
 export { CompanyProfileService } from "@/services/companyProfileService";
+
+export { TransactionService } from "@/services/transactionService";

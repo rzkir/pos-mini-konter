@@ -84,7 +84,7 @@ export default function Products() {
         icon="P"
         title="Daftar Produk"
         subtitle="Kelola inventori produk Anda"
-        colors={['#FF9228', '#FF9228']}
+        colors={['#1E90FF', '#1E90FF']}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -118,8 +118,8 @@ export default function Products() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#FF9228']} // Android
-            tintColor="#3B82F6" // iOS
+            colors={['#1E90FF']} // Android
+            tintColor="#1E90FF" // iOS
             title="Memuat ulang..." // iOS
             titleColor="#6B7280" // iOS
           />

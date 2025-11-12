@@ -263,16 +263,15 @@ export default function ProductsBarcodes() {
     return (
         <View className="flex-1 bg-background">
             <HeaderGradient
-                title="Barcode Produk"
-                subtitle="Lihat semua barcode produk"
-                icon="B"
-                colors={['#FF9228', '#FF9228']}
+                title="Daftar Barcode Produk"
+                subtitle="Kelola barcode produk Anda"
+                icon="BP"
             >
                 <View className="flex-row items-center justify-between w-full">
                     <TouchableOpacity onPress={() => router.back()} className="bg-white/20 p-3 rounded-full">
                         <Ionicons name="arrow-back" size={20} color="#fff" />
                     </TouchableOpacity>
-                    <Text className="text-white font-bold text-xl">Barcode Produk</Text>
+                    <Text className="text-white font-bold text-xl">Daftar Barcode Produk</Text>
                     <View className="w-10" />
                 </View>
             </HeaderGradient>
