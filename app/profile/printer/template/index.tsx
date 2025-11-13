@@ -13,6 +13,14 @@ const STORAGE_KEY = process.env.EXPO_PUBLIC_PRINTER_CUSTUM as string;
 const APP_SETTINGS_STORAGE_KEY = process.env.EXPO_PUBLIC_APP_SETTINGS as string;
 
 /**
+ * Default app settings (consistent with useAppSettings hook)
+ */
+const DEFAULT_APP_SETTINGS = {
+  dateFormat: "DD/MM/YYYY" as const,
+  decimalPlaces: 2,
+};
+
+/**
  * Load app settings from storage
  */
 export const loadAppSettings = async (): Promise<{ dateFormat: "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD"; decimalPlaces: number }> => {
@@ -21,14 +29,14 @@ export const loadAppSettings = async (): Promise<{ dateFormat: "DD/MM/YYYY" | "M
     if (stored) {
       const parsedSettings = JSON.parse(stored);
       return {
-        dateFormat: parsedSettings.dateFormat || "DD/MM/YYYY",
-        decimalPlaces: parsedSettings.decimalPlaces ?? 2,
+        dateFormat: parsedSettings.dateFormat || DEFAULT_APP_SETTINGS.dateFormat,
+        decimalPlaces: parsedSettings.decimalPlaces ?? DEFAULT_APP_SETTINGS.decimalPlaces,
       };
     }
-    return { dateFormat: "DD/MM/YYYY", decimalPlaces: 2 };
+    return DEFAULT_APP_SETTINGS;
   } catch (error) {
     console.error('Error loading app settings:', error);
-    return { dateFormat: "DD/MM/YYYY", decimalPlaces: 2 };
+    return DEFAULT_APP_SETTINGS;
   }
 };
 
@@ -42,7 +50,6 @@ export const DEFAULT_TEMPLATE: TemplateSettings = {
   storeWebsite: "",
   footerMessage: "Terima kasih atas kunjungan Anda!\nBarang yang sudah dibeli tidak dapat ditukar/dikembalikan",
   showFooter: true,
-  logoUrl: "",
   showLogo: false,
   logoWidth: 200,
   logoHeight: 80,
@@ -338,9 +345,6 @@ export const generateReceiptText = async (props: PrintTemplateProps): Promise<st
 
   // Logo dihapus untuk menghindari masalah encoding
   // Logo tetap akan muncul di HTML/PDF version
-  // if (showLogo && logoUrl) {
-  //   ... logo code removed ...
-  // }
 
   // Header with store info
   receiptParts.push(
@@ -363,11 +367,21 @@ export const generateReceiptText = async (props: PrintTemplateProps): Promise<st
 
   // Transaction Info
   const date = new Date(transaction.created_at || Date.now());
+
+  // Generate token number from transaction ID (format: TOKEN-XXXX)
+  const tokenNumber = `TOKEN-${String(transaction.id || 0).padStart(4, '0')}`;
+
   let transactionInfo = `No.: ${transaction.transaction_number || 'N/A'}\n`;
+  transactionInfo += `Token: ${tokenNumber}\n`;
 
   // Customer Info (if exists)
   if (transaction.customer_name) {
     transactionInfo += `Pelanggan: ${transaction.customer_name}\n`;
+  }
+
+  // Kasir/Cashier info (if exists)
+  if (transaction.created_by) {
+    transactionInfo += `Kasir: ${transaction.created_by}\n`;
   }
 
   transactionInfo += `Tgl: ${formatDate(date)}\n` +
@@ -540,10 +554,6 @@ export const generateReceiptHTML = async (props: PrintTemplateProps): Promise<st
     storeWebsite = customSettings?.storeWebsite,
     footerMessage = customSettings?.footerMessage,
     showFooter = customSettings?.showFooter !== false,
-    logoUrl = customSettings?.logoUrl,
-    showLogo = customSettings?.showLogo !== false,
-    logoWidth = customSettings?.logoWidth || 200,
-    logoHeight = customSettings?.logoHeight || 80,
   } = props;
 
   // Format functions using app settings
@@ -561,6 +571,9 @@ export const generateReceiptHTML = async (props: PrintTemplateProps): Promise<st
   const date = new Date(transaction.created_at || Date.now());
   const formattedDate = formatDate(date);
   const formattedTime = formatTime(date);
+
+  // Generate token number from transaction ID (format: TOKEN-XXXX)
+  const tokenNumber = `TOKEN-${String(transaction.id || 0).padStart(4, '0')}`;
 
   // Get payment method label sesuai dengan paymentCard
   const getPaymentMethodLabel = (method: string): string => {
@@ -759,7 +772,6 @@ export const generateReceiptHTML = async (props: PrintTemplateProps): Promise<st
     </head>
     <body>
       <div class="header">
-        ${showLogo && logoUrl ? `<img src="${logoUrl}" alt="Logo" style="width: ${logoWidth}px; height: ${logoHeight}px; max-width: 100%; margin-bottom: 12px; display: block; margin-left: auto; margin-right: auto; object-fit: contain;" />` : ''}
         <h1>${storeName}</h1>
         ${storeAddress ? `<div class="address">${storeAddress}</div>` : ''}
         ${storePhone ? `<div class="phone">Telp: ${storePhone}</div>` : ''}
@@ -776,10 +788,20 @@ export const generateReceiptHTML = async (props: PrintTemplateProps): Promise<st
         <span class="label">No.:</span>
         <span class="value">${transaction.transaction_number || 'N/A'}</span>
       </div>
+      <div class="info-row">
+        <span class="label">Token:</span>
+        <span class="value">${tokenNumber}</span>
+      </div>
       ${transaction.customer_name ? `
       <div class="info-row">
         <span class="label">Pelanggan:</span>
         <span class="value">${transaction.customer_name}</span>
+      </div>
+      ` : ''}
+      ${transaction.created_by ? `
+      <div class="info-row">
+        <span class="label">Kasir:</span>
+        <span class="value">${transaction.created_by}</span>
       </div>
       ` : ''}
       <div class="info-row">

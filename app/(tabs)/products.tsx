@@ -84,7 +84,6 @@ export default function Products() {
         icon="P"
         title="Daftar Produk"
         subtitle="Kelola inventori produk Anda"
-        colors={['#1E90FF', '#1E90FF']}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
