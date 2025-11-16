@@ -24,6 +24,8 @@ import { ProductProvider } from '@/context/ProductContext';
 
 import { AppSettingsProvider } from '@/context/AppSettingsContext';
 
+import { AuthProvider } from '@/context/AuthContext';
+
 export const unstable_settings = {
   initialRouteName: 'index',
 };
@@ -102,28 +104,30 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar style="dark" backgroundColor="#1E90FF" />
-        <PermissionProvider>
-          <AppSettingsProvider>
-            <ProductProvider>
-              <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top', 'bottom']}>
-                <Stack
-                  initialRouteName="index"
-                  screenOptions={{
-                    headerShown: false,
-                    animation: 'slide_from_right',
-                    animationDuration: 300,
-                    contentStyle: { backgroundColor: '#ffffff' },
-                  }}
-                >
-                  <Stack.Screen name="index" />
-                  <Stack.Screen name="(tabs)" />
-                </Stack>
-              </SafeAreaView>
-            </ProductProvider>
-          </AppSettingsProvider>
-        </PermissionProvider>
+        <AuthProvider>
+          <PermissionProvider>
+            <AppSettingsProvider>
+              <ProductProvider>
+                <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top', 'bottom']}>
+                  <Stack
+                    initialRouteName="index"
+                    screenOptions={{
+                      headerShown: false,
+                      animation: 'slide_from_right',
+                      animationDuration: 300,
+                      contentStyle: { backgroundColor: '#ffffff' },
+                    }}
+                  >
+                    <Stack.Screen name="index" />
+                    <Stack.Screen name="(tabs)" />
+                  </Stack>
+                </SafeAreaView>
+              </ProductProvider>
+            </AppSettingsProvider>
+          </PermissionProvider>
+        </AuthProvider>
       </SafeAreaProvider>
       <Toast />
-    </GestureHandlerRootView>
+    </GestureHandlerRootView >
   );
 }

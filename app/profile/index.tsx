@@ -1,237 +1,196 @@
-import { Ionicons } from '@expo/vector-icons'
-
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Image } from 'react-native'
+import React, { useState } from 'react'
 import { router } from 'expo-router'
-
-import { useState } from 'react'
-
-import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native'
-
+import { Ionicons } from '@expo/vector-icons'
+import { useAuth } from '@/context/AuthContext'
+import * as ImagePicker from 'expo-image-picker'
 import Toast from 'react-native-toast-message'
 
-export default function Settings() {
-    const [notificationsEnabled, setNotificationsEnabled] = useState(true)
-    const [autoSyncEnabled, setAutoSyncEnabled] = useState(true)
-    const [soundEnabled, setSoundEnabled] = useState(true)
+export default function ProfilePage() {
+    const { user, loading } = useAuth()
+    const [profileImage, setProfileImage] = useState<string | null>(null)
 
-    const handleBack = () => {
-        router.back()
+    const formatDate = (date: Date | string | undefined) => {
+        if (!date) return '-'
+        const d = typeof date === 'string' ? new Date(date) : date
+        return d.toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        })
     }
 
-    const handleClearCache = () => {
-        Alert.alert(
-            'Hapus Cache',
-            'Apakah Anda yakin ingin menghapus cache aplikasi?',
-            [
-                { text: 'Batal', style: 'cancel' },
-                {
-                    text: 'Hapus',
-                    style: 'destructive',
-                    onPress: () => {
-                        Toast.show({ type: 'success', text1: 'Cache berhasil dihapus' })
-                    }
-                }
-            ]
+    const handleImagePicker = async () => {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync()
+
+        if (permissionResult.granted === false) {
+            Toast.show({
+                type: 'error',
+                text1: 'Izin Diperlukan',
+                text2: 'Izin untuk mengakses galeri diperlukan!',
+            })
+            return
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
+        })
+
+        if (!result.canceled) {
+            setProfileImage(result.assets[0].uri)
+        }
+    }
+
+    if (loading) {
+        return (
+            <View className="flex-1 bg-white items-center justify-center">
+                <ActivityIndicator size="large" color="#1E90FF" />
+                <Text className="text-gray-500 mt-4">Memuat profil...</Text>
+            </View>
         )
     }
 
-    const handleResetSettings = () => {
-        Alert.alert(
-            'Reset Pengaturan',
-            'Apakah Anda yakin ingin mengembalikan semua pengaturan ke default?',
-            [
-                { text: 'Batal', style: 'cancel' },
-                {
-                    text: 'Reset',
-                    style: 'destructive',
-                    onPress: () => {
-                        setNotificationsEnabled(true)
-                        setAutoSyncEnabled(true)
-                        setSoundEnabled(true)
-                        Toast.show({ type: 'success', text1: 'Pengaturan berhasil direset' })
-                    }
-                }
-            ]
+    if (!user) {
+        return (
+            <View className="flex-1 bg-white items-center justify-center px-4">
+                <Ionicons name="person-circle-outline" size={80} color="#9CA3AF" />
+                <Text className="text-gray-900 text-lg font-bold mt-4">
+                    Tidak ada pengguna yang login
+                </Text>
+                <Text className="text-gray-500 text-center mt-2">
+                    Silakan login terlebih dahulu untuk melihat profil
+                </Text>
+                <TouchableOpacity
+                    onPress={() => router.push('/auth/signin')}
+                    className="mt-6 bg-blue-600 px-6 py-3 rounded-xl"
+                >
+                    <Text className="text-white font-semibold">Login</Text>
+                </TouchableOpacity>
+            </View>
         )
-    }
-
-    const handleAboutApp = () => {
-        Alert.alert(
-            'Tentang Aplikasi',
-            'POS Mobile v1.0.0\n\nAplikasi Point of Sale untuk bisnis Anda.\n\n© 2024 POS Mobile',
-            [{ text: 'OK' }]
-        )
-    }
-
-    const handlePrivacyPolicy = () => {
-        Toast.show({ type: 'info', text1: 'Kebijakan Privasi akan segera tersedia' })
-    }
-
-    const handleTermsOfService = () => {
-        Toast.show({ type: 'info', text1: 'Syarat Layanan akan segera tersedia' })
     }
 
     return (
-        <View className="flex-1 bg-gray-50">
+        <View className="flex-1 bg-white">
             {/* Header */}
-            <View className="bg-white px-4 py-3 border-b border-gray-200">
-                <View className="flex-row items-center justify-between">
-                    <TouchableOpacity onPress={handleBack} className="p-2">
-                        <Ionicons name="arrow-back" size={24} color="#374151" />
+            <View className="pt-12 pb-4 px-4 border-b border-gray-200">
+                <View className="flex-row items-center">
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        className="mr-4"
+                    >
+                        <Ionicons name="arrow-back" size={24} color="#1F2937" />
                     </TouchableOpacity>
-                    <Text className="text-lg font-semibold text-gray-900">Pengaturan</Text>
-                    <View className="w-10" />
+                    <Text className="text-xl font-bold text-gray-900 flex-1 text-center -ml-8">
+                        Edit Profile
+                    </Text>
                 </View>
             </View>
 
-            <ScrollView className="flex-1">
-                <View className="px-4 mt-4 mb-2">
+            <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
+                {/* Profile Picture */}
+                <View className="items-center mt-8 mb-6">
                     <TouchableOpacity
-                        className="flex-row items-center bg-blue-600 rounded-2xl p-4 shadow-lg"
-                        onPress={() => router.push('/profile/printer')}
+                        onPress={handleImagePicker}
+                        className="relative"
                     >
-                        <Ionicons name="print" size={24} color="white" style={{ marginRight: 16 }} />
-                        <Text className="text-white text-lg font-bold flex-1">Pengaturan Printer</Text>
-                        <Ionicons name="chevron-forward" size={20} color="white" />
-                    </TouchableOpacity>
-                </View>
-                {/* General Settings */}
-                <View className="bg-white mt-4 mx-4 rounded-lg shadow-sm">
-                    <Text className="text-lg font-semibold text-gray-900 px-4 py-3 border-b border-gray-100">
-                        Pengaturan Umum
-                    </Text>
-
-                    <View className="px-4 py-3">
-                        <View className="flex-row items-center justify-between py-3">
-                            <View className="flex-1">
-                                <Text className="text-base font-medium text-gray-900">Notifikasi</Text>
-                                <Text className="text-sm text-gray-500">Terima notifikasi dari aplikasi</Text>
-                            </View>
-                            <Switch
-                                value={notificationsEnabled}
-                                onValueChange={setNotificationsEnabled}
-                                trackColor={{ false: '#E5E7EB', true: '#3B82F6' }}
-                                thumbColor={notificationsEnabled ? '#FFFFFF' : '#F3F4F6'}
+                        {profileImage ? (
+                            <Image
+                                source={{ uri: profileImage }}
+                                className="w-32 h-32 rounded-full"
                             />
+                        ) : (
+                            <View className="w-32 h-32 rounded-full bg-green-600 items-center justify-center">
+                                <Text className="text-white text-5xl font-bold">
+                                    {user.username?.[0]?.toUpperCase() || 'U'}
+                                </Text>
+                            </View>
+                        )}
+                        <View className="absolute bottom-0 right-0 w-10 h-10 bg-blue-600 rounded-full border-4 border-white items-center justify-center">
+                            <Ionicons name="camera" size={18} color="white" />
                         </View>
-
-                        <View className="flex-row items-center justify-between py-3 border-t border-gray-100">
-                            <View className="flex-1">
-                                <Text className="text-base font-medium text-gray-900">Sinkronisasi Otomatis</Text>
-                                <Text className="text-sm text-gray-500">Sinkronisasi data secara otomatis</Text>
-                            </View>
-                            <Switch
-                                value={autoSyncEnabled}
-                                onValueChange={setAutoSyncEnabled}
-                                trackColor={{ false: '#E5E7EB', true: '#3B82F6' }}
-                                thumbColor={autoSyncEnabled ? '#FFFFFF' : '#F3F4F6'}
-                            />
-                        </View>
-                    </View>
-                </View>
-
-                {/* Sound & Vibration Settings */}
-                <View className="bg-white mt-4 mx-4 rounded-lg shadow-sm">
-                    <Text className="text-lg font-semibold text-gray-900 px-4 py-3 border-b border-gray-100">
-                        Suara & Getaran
-                    </Text>
-
-                    <View className="px-4 py-3">
-                        <View className="flex-row items-center justify-between py-3">
-                            <View className="flex-1">
-                                <Text className="text-base font-medium text-gray-900">Suara</Text>
-                                <Text className="text-sm text-gray-500">Aktifkan suara notifikasi</Text>
-                            </View>
-                            <Switch
-                                value={soundEnabled}
-                                onValueChange={setSoundEnabled}
-                                trackColor={{ false: '#E5E7EB', true: '#3B82F6' }}
-                                thumbColor={soundEnabled ? '#FFFFFF' : '#F3F4F6'}
-                            />
-                        </View>
-                    </View>
-                </View>
-
-                {/* Other Data Management */}
-                <View className="bg-white mt-4 mx-4 rounded-lg shadow-sm">
-                    <Text className="text-lg font-semibold text-gray-900 px-4 py-3 border-b border-gray-100">
-                        Manajemen Data
-                    </Text>
-
-                    <View className="px-4">
-                        <TouchableOpacity
-                            onPress={handleClearCache}
-                            className="flex-row items-center justify-between py-4"
-                        >
-                            <View className="flex-row items-center">
-                                <Ionicons name="trash-outline" size={20} color="#EF4444" />
-                                <Text className="text-base font-medium text-gray-900 ml-3">Hapus Cache</Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {/* App Information */}
-                <View className="bg-white mt-4 mx-4 rounded-lg shadow-sm">
-                    <Text className="text-lg font-semibold text-gray-900 px-4 py-3 border-b border-gray-100">
-                        Informasi Aplikasi
-                    </Text>
-
-                    <View className="px-4">
-                        <TouchableOpacity
-                            onPress={handleAboutApp}
-                            className="flex-row items-center justify-between py-4 border-b border-gray-100"
-                        >
-                            <View className="flex-row items-center">
-                                <Ionicons name="information-circle-outline" size={20} color="#6B7280" />
-                                <Text className="text-base font-medium text-gray-900 ml-3">Tentang Aplikasi</Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            onPress={handlePrivacyPolicy}
-                            className="flex-row items-center justify-between py-4 border-b border-gray-100"
-                        >
-                            <View className="flex-row items-center">
-                                <Ionicons name="shield-checkmark-outline" size={20} color="#6B7280" />
-                                <Text className="text-base font-medium text-gray-900 ml-3">Kebijakan Privasi</Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            onPress={handleTermsOfService}
-                            className="flex-row items-center justify-between py-4"
-                        >
-                            <View className="flex-row items-center">
-                                <Ionicons name="document-text-outline" size={20} color="#6B7280" />
-                                <Text className="text-base font-medium text-gray-900 ml-3">Syarat Layanan</Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {/* Reset Settings */}
-                <View className="bg-white mt-4 mx-4 rounded-lg shadow-sm">
-                    <TouchableOpacity
-                        onPress={handleResetSettings}
-                        className="flex-row items-center justify-center py-4"
-                    >
-                        <Ionicons name="refresh-outline" size={20} color="#EF4444" />
-                        <Text className="text-base font-medium text-red-600 ml-2">Reset Pengaturan</Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* Version Info */}
-                <View className="px-4 py-6">
-                    <Text className="text-center text-sm text-gray-500">
-                        POS Mobile v1.0.0
+                {/* First Section */}
+                <View className="px-4 mb-4">
+                    <View className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                        <TouchableOpacity className="flex-row items-center justify-between px-4 py-4 border-b border-gray-100">
+                            <Text className="text-gray-600 text-base">Name</Text>
+                            <View className="flex-row items-center flex-1 justify-end">
+                                <Text className="text-gray-900 text-base font-medium mr-2">
+                                    {user.username}
+                                </Text>
+                                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                            </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity className="flex-row items-center justify-between px-4 py-4">
+                            <Text className="text-gray-600 text-base">Perusahaan</Text>
+                            <View className="flex-row items-center flex-1 justify-end">
+                                <Text className="text-gray-900 text-base font-medium mr-2">
+                                    Explore Benefits
+                                </Text>
+                                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                {/* Private Information Section */}
+                <View className="px-4 mb-6">
+                    <Text className="text-gray-900 text-lg font-bold mb-3 px-1">
+                        Private Information
                     </Text>
-                    <Text className="text-center text-xs text-gray-400 mt-1">
-                        © 2024 POS Mobile. All rights reserved.
-                    </Text>
+                    <View className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                        <TouchableOpacity className="flex-row items-center justify-between px-4 py-4 border-b border-gray-100">
+                            <Text className="text-gray-600 text-base">Email</Text>
+                            <View className="flex-row items-center flex-1 justify-end">
+                                <Text className="text-gray-900 text-base font-medium mr-2 text-right flex-1">
+                                    {user.email}
+                                </Text>
+                                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                            </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity className="flex-row items-center justify-between px-4 py-4 border-b border-gray-100">
+                            <Text className="text-gray-600 text-base">Birthdate</Text>
+                            <View className="flex-row items-center flex-1 justify-end">
+                                <Text className="text-gray-900 text-base font-medium mr-2">
+                                    {formatDate(user.created_at)}
+                                </Text>
+                                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                            </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity className="flex-row items-center justify-between px-4 py-4 border-b border-gray-100">
+                            <Text className="text-gray-600 text-base">Gender</Text>
+                            <View className="flex-row items-center flex-1 justify-end">
+                                <Text className="text-gray-900 text-base font-medium mr-2">
+                                    -
+                                </Text>
+                                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                            </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity className="flex-row items-center justify-between px-4 py-4 border-b border-gray-100">
+                            <Text className="text-gray-600 text-base">Weight</Text>
+                            <View className="flex-row items-center flex-1 justify-end">
+                                <Text className="text-gray-900 text-base font-medium mr-2">
+                                    -
+                                </Text>
+                                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                            </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity className="flex-row items-center justify-between px-4 py-4">
+                            <Text className="text-gray-600 text-base">Height</Text>
+                            <View className="flex-row items-center flex-1 justify-end">
+                                <Text className="text-gray-900 text-base font-medium mr-2">
+                                    -
+                                </Text>
+                                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                            </View>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </ScrollView>
         </View>

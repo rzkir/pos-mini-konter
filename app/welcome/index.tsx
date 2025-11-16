@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react';
 
 import { Text, TouchableOpacity, View } from 'react-native';
 
+import { useAuth } from '@/context/AuthContext';
+
 const onboardingData = [
     {
         id: 1,
@@ -30,14 +32,14 @@ const onboardingData = [
 ];
 
 export default function OnboardingScreen() {
+    const { isAuthenticated, loading } = useAuth();
+
     useEffect(() => {
-        (async () => {
-            const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
-            if (isLoggedIn === 'true') {
-                router.replace('/(tabs)');
-            }
-        })();
-    }, []);
+        // Jika sudah login, langsung redirect ke tabs
+        if (!loading && isAuthenticated) {
+            router.replace('/(tabs)');
+        }
+    }, [isAuthenticated, loading]);
 
     const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -57,12 +59,12 @@ export default function OnboardingScreen() {
 
     const handleSkip = async () => {
         await AsyncStorage.setItem('onboarding_completed', 'true');
-        router.replace('/(tabs)');
+        router.replace('/auth/signin');
     };
 
     const handleGetStarted = async () => {
         await AsyncStorage.setItem('onboarding_completed', 'true');
-        router.replace('/(tabs)');
+        router.replace('/auth/signin');
     };
 
     const currentData = onboardingData[currentIndex];

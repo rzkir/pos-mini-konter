@@ -2,7 +2,7 @@ import { router } from 'expo-router'
 
 import { useState, useCallback } from 'react'
 
-import { ScrollView, Text, TouchableOpacity, View, Image, RefreshControl } from 'react-native'
+import { ScrollView, Text, TouchableOpacity, View, Image, RefreshControl, Alert } from 'react-native'
 
 import { Ionicons } from '@expo/vector-icons'
 
@@ -12,8 +12,13 @@ import HeaderGradient from '@/components/ui/HeaderGradient';
 
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { useAuth } from '@/context/AuthContext';
+
+import Toast from 'react-native-toast-message';
+
 export default function Profil() {
     const { companyProfile, loadProfile } = useCompanyProfile();
+    const { logout } = useAuth();
     const [refreshing, setRefreshing] = useState(false);
 
     const onRefresh = useCallback(async () => {
@@ -25,8 +30,35 @@ export default function Profil() {
         }
     }, [loadProfile]);
 
-    const handleEditProfile = () => {
+    const handleLogout = () => {
+        Alert.alert(
+            'Keluar',
+            'Apakah Anda yakin ingin keluar dari akun?',
+            [
+                { text: 'Batal', style: 'cancel' },
+                {
+                    text: 'Keluar',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await logout();
+                            router.replace('/welcome');
+                            Toast.show({ type: 'success', text1: 'Berhasil keluar' });
+                        } catch {
+                            Toast.show({ type: 'error', text1: 'Gagal keluar' });
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleEditProfileCompany = () => {
         router.push('/profile/edit-profile')
+    }
+
+    const handleEditProfile = () => {
+        router.push('/profile')
     }
 
     const handleAppSettings = () => {
@@ -109,6 +141,26 @@ export default function Profil() {
                         {/* Edit Profile */}
                         <TouchableOpacity
                             onPress={handleEditProfile}
+                            className="bg-card rounded-2xl overflow-hidden border border-border"
+                        >
+                            <View className="flex-row items-center p-6">
+                                <LinearGradient
+                                    colors={['#3b82f6', '#1d4ed8']}
+                                    className="w-14 h-14 rounded-2xl items-center justify-center mr-4"
+                                >
+                                    <Ionicons name="create" size={28} color="white" />
+                                </LinearGradient>
+                                <View className="flex-1">
+                                    <Text className="text-lg font-bold text-text-primary mb-1">Edit Profile</Text>
+                                    <Text className="text-text-secondary">Ubah informasi profile</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Edit Profile Company */}
+                        <TouchableOpacity
+                            onPress={handleEditProfileCompany}
                             className="bg-card rounded-2xl overflow-hidden border border-border"
                         >
                             <View className="flex-row items-center p-6">
@@ -220,6 +272,25 @@ export default function Profil() {
                                     <Text className="text-text-secondary">Informasi versi dan dukungan</Text>
                                 </View>
                                 <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+                            </View>
+                        </TouchableOpacity>
+                        {/* Logout */}
+                        <TouchableOpacity
+                            onPress={handleLogout}
+                            className="bg-card rounded-2xl overflow-hidden border border-red-200"
+                        >
+                            <View className="flex-row items-center p-6">
+                                <LinearGradient
+                                    colors={['#ef4444', '#dc2626']}
+                                    className="w-14 h-14 rounded-2xl items-center justify-center mr-4"
+                                >
+                                    <Ionicons name="log-out" size={28} color="white" />
+                                </LinearGradient>
+                                <View className="flex-1">
+                                    <Text className="text-lg font-bold text-red-600 mb-1">Keluar</Text>
+                                    <Text className="text-text-secondary">Keluar dari akun Anda</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color="#ef4444" />
                             </View>
                         </TouchableOpacity>
                     </View>

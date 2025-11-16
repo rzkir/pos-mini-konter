@@ -2,20 +2,24 @@ import { router, usePathname } from 'expo-router';
 
 import { useEffect, useRef } from 'react';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import { usePermissions } from '@/context/PermissionContext';
+
+import { useAuth } from '@/context/AuthContext';
 
 export default function Index() {
     const pathname = usePathname();
     const hasRedirected = useRef(false);
     const { allPermissionsGranted } = usePermissions();
+    const { isAuthenticated, loading } = useAuth();
 
     useEffect(() => {
         let rafId: number | null = null;
         const checkUserAndRedirect = async () => {
             if (hasRedirected.current) return;
             if (pathname !== '/') return;
+
+            // Tunggu sampai auth loading selesai
+            if (loading) return;
 
             // Redirect ke halaman perizinan jika izin belum diberikan
             if (!allPermissionsGranted) {
@@ -24,12 +28,12 @@ export default function Index() {
                 return;
             }
 
-            const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
-
-            if (isLoggedIn === 'true') {
+            // Jika sudah login, redirect ke tabs
+            if (isAuthenticated) {
                 hasRedirected.current = true;
                 router.replace('/(tabs)');
             } else {
+                // Jika belum login, redirect ke welcome
                 hasRedirected.current = true;
                 router.replace('/welcome');
             }
@@ -40,7 +44,7 @@ export default function Index() {
         return () => {
             if (rafId) cancelAnimationFrame(rafId);
         };
-    }, [pathname, allPermissionsGranted]);
+    }, [pathname, allPermissionsGranted, isAuthenticated, loading]);
 
     useEffect(() => {
         hasRedirected.current = false;

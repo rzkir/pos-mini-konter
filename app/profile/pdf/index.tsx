@@ -8,15 +8,21 @@ import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 
 import HeaderGradient from '@/components/ui/HeaderGradient';
-import { generateReceiptHTML, testReceiptOutput } from '@/app/profile/printer/template';
+import { generateReceiptHTML, generateReceiptText, testReceiptOutput } from '@/app/profile/printer/template';
+import { usePrinter } from '@/hooks/usePrinter';
 
 type TestScenario = 'token-listrik' | 'pulsa' | 'paket-data' | 'voucher-game' | 'mixed';
 
 export default function PDFTestPrint() {
     const [loading, setLoading] = useState(false);
+    const [printing, setPrinting] = useState(false);
+    const [importing, setImporting] = useState(false);
     const [htmlContent, setHtmlContent] = useState<string>('');
     const [pdfUri, setPdfUri] = useState<string>('');
+    const [importedFileName, setImportedFileName] = useState<string>('');
     const [selectedScenario, setSelectedScenario] = useState<TestScenario>('token-listrik');
+
+    const { printText, connectedAddress } = usePrinter();
 
     // Generate mock transaction based on scenario
     const getMockData = (scenario: TestScenario) => {
@@ -352,6 +358,228 @@ export default function PDFTestPrint() {
         }
     };
 
+    const handleTestPrint = async () => {
+        if (!connectedAddress) {
+            Toast.show({
+                type: 'info',
+                text1: 'Printer Belum Terhubung',
+                text2: 'Silakan hubungkan printer terlebih dahulu di Pengaturan Printer',
+                visibilityTime: 3000,
+            });
+            return;
+        }
+
+        try {
+            setPrinting(true);
+
+            const { transaction, items } = getMockData(selectedScenario);
+
+            // Generate receipt text untuk printer
+            const receiptText = await generateReceiptText({
+                transaction,
+                items,
+            });
+
+            // Print langsung ke printer
+            await printText(receiptText);
+
+            Toast.show({
+                type: 'success',
+                text1: 'Berhasil',
+                text2: 'Struk berhasil dicetak ke printer',
+                visibilityTime: 2000,
+            });
+        } catch (error: any) {
+            console.error('Error printing:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Gagal Mencetak',
+                text2: error?.message || 'Gagal mencetak ke printer',
+                visibilityTime: 3000,
+            });
+        } finally {
+            setPrinting(false);
+        }
+    };
+
+    const handleImportPDF = async () => {
+        try {
+            setImporting(true);
+
+            const DocumentPicker = await import("expo-document-picker" as any);
+            const FileSystemLegacy = await import("expo-file-system/legacy" as any);
+
+            const result =
+                (await (DocumentPicker as any).getDocumentAsync?.({
+                    type: ["application/pdf", "text/html", "text/plain"],
+                    copyToCacheDirectory: true,
+                    multiple: false,
+                })) ||
+                (DocumentPicker as any).default?.getDocumentAsync?.({
+                    type: ["application/pdf", "text/html", "text/plain"],
+                    copyToCacheDirectory: true,
+                    multiple: false,
+                });
+
+            if (result?.canceled || !result?.assets?.[0]) {
+                setImporting(false);
+                return;
+            }
+
+            const fileUri = result.assets[0].uri;
+            const fileName = result.assets[0].name || 'imported-file';
+            const mimeType = result.assets[0].mimeType || '';
+
+            setImportedFileName(fileName);
+
+            // Baca konten file
+            let fileContent: string;
+            try {
+                fileContent =
+                    (await (FileSystemLegacy as any).readAsStringAsync?.(fileUri)) ||
+                    (FileSystemLegacy as any).default?.readAsStringAsync?.(fileUri);
+            } catch (readError: any) {
+                // Jika PDF, coba baca sebagai base64 atau gunakan Print API
+                if (mimeType === 'application/pdf') {
+                    Toast.show({
+                        type: 'info',
+                        text1: 'Info',
+                        text2: 'File PDF terdeteksi. Gunakan fitur print untuk mencetak PDF.',
+                        visibilityTime: 3000,
+                    });
+                    setImporting(false);
+                    return;
+                }
+                throw new Error('Gagal membaca file: ' + readError?.message);
+            }
+
+            if (!fileContent) {
+                throw new Error('File kosong atau tidak dapat dibaca');
+            }
+
+            // Jika file HTML, simpan untuk preview dan print
+            if (mimeType === 'text/html' || fileName.endsWith('.html')) {
+                setHtmlContent(fileContent);
+
+                // Generate PDF dari HTML untuk preview
+                if (Platform.OS !== 'web') {
+                    try {
+                        const { uri } = await Print.printToFileAsync({
+                            html: fileContent,
+                            base64: false,
+                        });
+                        setPdfUri(uri);
+                    } catch (pdfError) {
+                        console.log('PDF generation skipped:', pdfError);
+                    }
+                }
+
+                Toast.show({
+                    type: 'success',
+                    text1: 'Berhasil Import',
+                    text2: 'File HTML berhasil diimport. Anda bisa preview atau print langsung.',
+                    visibilityTime: 3000,
+                });
+            }
+            // Jika file text (receipt text ESC/POS), simpan untuk print langsung
+            else if (mimeType === 'text/plain' || fileName.endsWith('.txt')) {
+                // Simpan sebagai receipt text untuk print
+                setHtmlContent(''); // Clear HTML karena ini text receipt
+
+                Toast.show({
+                    type: 'success',
+                    text1: 'Berhasil Import',
+                    text2: 'File receipt text berhasil diimport. Klik "Print Imported File" untuk mencetak.',
+                    visibilityTime: 3000,
+                });
+
+                // Simpan file content untuk print nanti
+                (global as any).__importedReceiptText = fileContent;
+            } else {
+                throw new Error('Format file tidak didukung. Gunakan file HTML atau TXT.');
+            }
+        } catch (error: any) {
+            console.error('Error importing file:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Gagal Import',
+                text2: error?.message || 'Gagal mengimport file',
+                visibilityTime: 3000,
+            });
+        } finally {
+            setImporting(false);
+        }
+    };
+
+    const handlePrintImportedFile = async () => {
+        if (!connectedAddress) {
+            Toast.show({
+                type: 'info',
+                text1: 'Printer Belum Terhubung',
+                text2: 'Silakan hubungkan printer terlebih dahulu di Pengaturan Printer',
+                visibilityTime: 3000,
+            });
+            return;
+        }
+
+        try {
+            setPrinting(true);
+
+            // Cek apakah ada imported receipt text
+            const importedText = (global as any).__importedReceiptText;
+
+            if (!importedText && !htmlContent) {
+                Toast.show({
+                    type: 'info',
+                    text1: 'Tidak Ada File',
+                    text2: 'Silakan import file terlebih dahulu',
+                    visibilityTime: 2000,
+                });
+                return;
+            }
+
+            // Jika ada imported text, gunakan itu (receipt text ESC/POS)
+            if (importedText) {
+                await printText(importedText);
+                Toast.show({
+                    type: 'success',
+                    text1: 'Berhasil',
+                    text2: 'File berhasil dicetak ke printer',
+                    visibilityTime: 2000,
+                });
+                return;
+            }
+
+            // Jika HTML, perlu convert ke receipt text dulu
+            // Untuk sementara, kita akan generate dari mock data
+            // Atau bisa juga print HTML langsung jika printer support
+            if (htmlContent) {
+                const { transaction, items } = getMockData(selectedScenario);
+                const receiptText = await generateReceiptText({
+                    transaction,
+                    items,
+                });
+                await printText(receiptText);
+                Toast.show({
+                    type: 'success',
+                    text1: 'Berhasil',
+                    text2: 'Struk berhasil dicetak ke printer',
+                    visibilityTime: 2000,
+                });
+            }
+        } catch (error: any) {
+            console.error('Error printing imported file:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Gagal Mencetak',
+                text2: error?.message || 'Gagal mencetak file yang diimport',
+                visibilityTime: 3000,
+            });
+        } finally {
+            setPrinting(false);
+        }
+    };
+
     const handleTestReceiptOutput = async () => {
         try {
             setLoading(true);
@@ -446,8 +674,106 @@ export default function PDFTestPrint() {
                         </View>
                     </View>
 
+                    {/* Printer Status */}
+                    {connectedAddress && (
+                        <View className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
+                            <View className="flex-row items-center">
+                                <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+                                <Text className="text-green-700 font-semibold ml-2">
+                                    Printer Terhubung
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {!connectedAddress && (
+                        <View className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4">
+                            <View className="flex-row items-center">
+                                <Ionicons name="warning" size={20} color="#f59e0b" />
+                                <Text className="text-yellow-700 font-semibold ml-2">
+                                    Printer Belum Terhubung
+                                </Text>
+                            </View>
+                            <Text className="text-yellow-600 text-xs mt-1">
+                                Hubungkan printer di Pengaturan Printer untuk test print langsung
+                            </Text>
+                        </View>
+                    )}
+
+                    {/* Imported File Info */}
+                    {importedFileName && (
+                        <View className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
+                            <View className="flex-row items-center">
+                                <Ionicons name="document" size={20} color="#3b82f6" />
+                                <View className="flex-1 ml-2">
+                                    <Text className="text-blue-700 font-semibold">
+                                        File Diimport: {importedFileName}
+                                    </Text>
+                                    <Text className="text-blue-600 text-xs mt-1">
+                                        File siap untuk di-print
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                    )}
+
                     {/* Action Buttons */}
                     <View className="flex-col gap-3 mb-4">
+                        <TouchableOpacity
+                            onPress={handleImportPDF}
+                            disabled={importing}
+                            className="bg-indigo-500 rounded-xl p-4 flex-row items-center justify-center"
+                        >
+                            {importing ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <>
+                                    <Ionicons name="document-attach" size={20} color="white" />
+                                    <Text className="text-white font-bold text-base ml-2">
+                                        Import PDF/HTML/TXT
+                                    </Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+
+                        {(importedFileName || (global as any).__importedReceiptText) && (
+                            <TouchableOpacity
+                                onPress={handlePrintImportedFile}
+                                disabled={printing || !connectedAddress}
+                                className={`rounded-xl p-4 flex-row items-center justify-center ${connectedAddress ? 'bg-orange-500' : 'bg-gray-400'
+                                    }`}
+                            >
+                                {printing ? (
+                                    <ActivityIndicator color="white" />
+                                ) : (
+                                    <>
+                                        <Ionicons name="print" size={20} color="white" />
+                                        <Text className="text-white font-bold text-base ml-2">
+                                            Print File yang Diimport
+                                        </Text>
+                                    </>
+                                )}
+                            </TouchableOpacity>
+                        )}
+
+                        <TouchableOpacity
+                            onPress={handleTestPrint}
+                            disabled={printing || !connectedAddress}
+                            className={`rounded-xl p-4 flex-row items-center justify-center ${connectedAddress ? 'bg-red-500' : 'bg-gray-400'
+                                }`}
+                        >
+                            {printing ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <>
+                                    <Ionicons name="print" size={20} color="white" />
+                                    <Text className="text-white font-bold text-base ml-2">
+                                        Test Print Langsung ke Printer
+                                    </Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+
                         <TouchableOpacity
                             onPress={handleGeneratePreview}
                             disabled={loading}
@@ -459,7 +785,7 @@ export default function PDFTestPrint() {
                                 <>
                                     <Ionicons name="eye" size={20} color="white" />
                                     <Text className="text-white font-bold text-base ml-2">
-                                        Generate Preview
+                                        Generate Preview PDF
                                     </Text>
                                 </>
                             )}
